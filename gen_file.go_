@@ -1,0 +1,197 @@
+package Maroto
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/johnfercher/maroto/v2"
+	"github.com/johnfercher/maroto/v2/pkg/components/text"
+	"github.com/johnfercher/maroto/v2/pkg/consts/align"
+	"github.com/johnfercher/maroto/v2/pkg/consts/fontfamily"
+	"github.com/johnfercher/maroto/v2/pkg/consts/fontstyle"
+	"github.com/johnfercher/maroto/v2/pkg/props"
+)
+
+// This program generates a PDF document that mimics the layout of the provided invoice image.
+// It uses the Maroto V2 library for Go to create a structured document with
+// headers, tables, and text fields.
+
+func main() {
+	// Create a new Maroto instance.
+	m := maroto.New()
+
+	// Add a top header section for the company name.
+	m.AddRows(
+		maroto.NewRow(10).Add(
+			text.New("ООО АйСофтПро", props.NewText(
+				props.Size(12),
+				props.Family(fontfamily.Helvetica),
+				props.Style(fontstyle.Bold),
+				props.Align(align.Left),
+			)),
+		),
+	)
+
+	// Add a row for the company address.
+	m.AddRows(
+		maroto.NewRow(10).Add(
+			text.New("344002, РОССИЯ, Ростовская область, Ростов-на-Дону, ул. Социалистическая, 74, офис 500, помещ. 11", props.NewText(
+				props.Size(8),
+				props.Family(fontfamily.Helvetica),
+				props.Align(align.Left),
+			)),
+		),
+	)
+
+	// Add a row for the title "Образец заполнения платежного поручения"
+	m.AddRows(
+		maroto.NewRow(8).Add(
+			text.New("Образец заполнения платежного поручения", props.NewText(
+				props.Size(9),
+				props.Family(fontfamily.Helvetica),
+				props.Style(fontstyle.Bold),
+				props.Align(align.Center),
+			)),
+		),
+	)
+
+	// Create a table for the company details (ИНН, КПП, etc.).
+	// The table is simulated using multiple rows and text components to get the desired alignment.
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("ИНН 6164147042", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("КПП 616401001", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("Сч. №", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("40702810626340000000", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+		maroto.NewRow(6).Add(
+			text.New("Получатель", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("(Название компании)", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("БИК", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("46015207", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+		maroto.NewRow(6).Add(
+			text.New("ООО АйСофтПро", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("Банк получателя", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("Сч. №", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("30101810500000000207", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+		maroto.NewRow(6).Add(
+			text.New("ФИЛИАЛ \"РОСТОВСКИЙ\" АО \"АЛЬФА-БАНК\"", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+	)
+
+	// Add an empty row for spacing, similar to the original document.
+	m.AddRows(maroto.NewRow(4))
+
+	// Add the main title "СЧЕТ № 001 от 01 Января 2011 г."
+	m.AddRows(
+		maroto.NewRow(8).Add(
+			text.New("СЧЕТ № 001 от 01 Января 2011 г.", props.NewText(
+				props.Size(10),
+				props.Family(fontfamily.Helvetica),
+				props.Style(fontstyle.Bold),
+				props.Align(align.Center),
+			)),
+		),
+	)
+
+	// Add an empty row for spacing.
+	m.AddRows(maroto.NewRow(4))
+
+	// Add the "Плательщик" line.
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("Плательщик: {company_name}", props.NewText(props.Size(9), props.Family(fontfamily.Helvetica))),
+		),
+	)
+
+	// Add an empty row for spacing.
+	m.AddRows(maroto.NewRow(4))
+
+	// Define the main table headers and data.
+	headers := []string{"№", "Наименование товара", "Количество", "Цена", "Сумма"}
+	contents := [][]string{
+		{"1", "Товар 1", "1", "1000,00", "1000,00"},
+	}
+
+	// Add the main content table using TableList.
+	m.AddRows(
+		maroto.NewTableList(
+			headers,
+			contents,
+			props.NewTableList(
+				props.WithHeaderStyle(props.NewText(props.Size(8), props.Style(fontstyle.Bold), props.Align(align.Center))),
+				props.WithContentStyle(props.NewText(props.Size(8), props.Align(align.Center))),
+				props.WithAlign(align.Center),
+				props.WithHeadings(
+					props.NewHeading("№", 1),
+					props.NewHeading("Наименование товара", 5),
+					props.NewHeading("Количество", 2),
+					props.NewHeading("Цена", 2),
+					props.NewHeading("Сумма", 2),
+				),
+			),
+		),
+	)
+
+	// Add empty rows for spacing between the table and the summary.
+	m.AddRows(maroto.NewRow(10))
+
+	// Add the summary rows ("Итого" and "Всего к оплате").
+	// This is done by simulating a table with text components and proper alignment.
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("Итого:", props.NewText(props.Size(8), props.Align(align.Right), props.Style(fontstyle.Bold))),
+			text.New("1000,00", props.NewText(props.Size(8), props.Align(align.Center), props.Style(fontstyle.Bold))),
+		),
+		maroto.NewRow(6).Add(
+			text.New("Всего к оплате:", props.NewText(props.Size(8), props.Align(align.Right), props.Style(fontstyle.Bold))),
+			text.New("1000,00", props.NewText(props.Size(8), props.Align(align.Center), props.Style(fontstyle.Bold))),
+		),
+	)
+
+	// Add an empty row for spacing.
+	m.AddRows(maroto.NewRow(4))
+
+	// Add the total amount in words.
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("Всего наименований 1, на сумму (сумма числом)", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("(Сумма словами)", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+	)
+
+	// Add an empty row for spacing.
+	m.AddRows(maroto.NewRow(10))
+
+	// Add the signature lines.
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("Руководитель предприятия", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("_____________________ (ФИО руководителя)", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+	)
+	m.AddRows(maroto.NewRow(10))
+	m.AddRows(
+		maroto.NewRow(6).Add(
+			text.New("Главный бухгалтер", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+			text.New("_____________________ (ФИО бухгалтера)", props.NewText(props.Size(8), props.Family(fontfamily.Helvetica))),
+		),
+	)
+
+	// Generate and save the PDF file.
+	document, err := m.Generate()
+	if err != nil {
+		fmt.Println("Could not generate PDF:", err)
+		os.Exit(1)
+	}
+
+	err = document.Save("invoice.pdf")
+	if err != nil {
+		fmt.Println("Could not save PDF:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("PDF file 'invoice.pdf' generated successfully!")
+}

@@ -1,0 +1,128 @@
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/johnfercher/maroto/pkg/consts"
+	"github.com/johnfercher/maroto/pkg/pdf"
+	"github.com/johnfercher/maroto/pkg/props"
+)
+
+type InvoiceData struct {
+	CompanyName      string
+	CompanyAddress   string
+	RecipientName    string
+	SubscriptionName string
+	Cost             int
+	CostInWords      string
+	InvoiceNumber    string
+	InvoiceDate      string
+	DirectorName     string
+	AccountantName   string
+}
+
+func GenerateInvoice(data InvoiceData, fileName string) error {
+	m := pdf.NewMaroto(consts.Portrait, consts.A4)
+
+	// Register a UTF-8 font that supports Cyrillic (you need to have this TTF file)
+	// e.g. use DejaVuSans: https://dejavu-fonts.github.io/
+	font_folder := "fonts/dejavu/"
+
+	m.AddUTF8Font("dejavu", consts.Normal, font_folder+"DejaVuSans.ttf")
+	m.AddUTF8Font("dejavu", consts.Bold, font_folder+"DejaVuSans-Bold.ttf")
+	m.AddUTF8Font("dejavu", consts.Italic, font_folder+"DejaVuSans-Oblique.ttf")
+
+	// Set default font
+	m.SetDefaultFontFamily("dejavu")
+
+	// === Header ===
+	m.Row(10, func() {
+		m.Col(12, func() {
+			m.Text(data.CompanyName, props.Text{Top: 2, Style: consts.Bold, Size: 12})
+		})
+	})
+	m.Row(15, func() {
+		m.Col(12, func() {
+			m.Text(data.CompanyAddress, props.Text{Size: 8})
+		})
+	})
+	m.Line(1.0)
+
+	// === Bank Info ===
+	headers := []string{"ИНН", "КПП", "Получатель", "Сч. №", "Банк", "БИК", "Кор. счёт"}
+	content := [][]string{
+		{"6164147042", "616401001", data.CompanyName, "40702810626340000000",
+			"ФИЛИАЛ 'РОСТОВСКИЙ' АО 'АЛЬФА-БАНК'", "46015207", "30101810500000000207"},
+	}
+	// m.TableList(headers, content, props.TableList{
+	// 	HeaderProp:  props.TableListContent{Style: consts.Bold, Size: 8},
+	// 	ContentProp: props.TableListContent{Size: 8},
+	// 	// Align:       consts.Middle,
+	// 	Line: false,
+	// })
+	m.TableList(headers, content)
+
+	// === Invoice Title ===
+	m.Row(15, func() {
+		m.Col(12, func() {
+			title := fmt.Sprintf("СЧЕТ № %s от %s", data.InvoiceNumber, data.InvoiceDate)
+			m.Text(title, props.Text{Top: 5, Style: consts.Bold, Align: consts.Center, Size: 12})
+		})
+	})
+
+	// === Product Table ===
+	productHeaders := []string{"№", "Наименование товара", "Ед.", "Кол-во", "Цена", "Сумма"}
+	productContent := [][]string{
+		{"1", data.SubscriptionName, "шт.", "1", fmt.Sprintf("%d", data.Cost), fmt.Sprintf("%d", data.Cost)},
+	}
+	m.TableList(productHeaders, productContent, props.TableList{
+		HeaderProp:  props.TableListContent{Style: consts.Bold, Size: 9},
+		ContentProp: props.TableListContent{Size: 9},
+		Line:        true,
+		Align:       consts.Center,
+	})
+
+	// === Totals ===
+	m.Row(10, func() {
+		m.Col(12, func() {
+			m.Text(fmt.Sprintf("Всего наименований 1, на сумму %d руб.", data.Cost), props.Text{Size: 9})
+		})
+	})
+	m.Row(10, func() {
+		m.Col(12, func() {
+			m.Text(data.CostInWords, props.Text{Style: consts.Italic, Size: 9})
+		})
+	})
+
+	// === Signatures ===
+	m.Row(15, func() {
+		m.Col(6, func() {
+			m.Text(fmt.Sprintf("Руководитель предприятия _____________ (%s)", data.DirectorName), props.Text{Size: 9})
+		})
+		m.Col(6, func() {
+			m.Text(fmt.Sprintf("Главный бухгалтер _____________ (%s)", data.AccountantName), props.Text{Size: 9})
+		})
+	})
+
+	return m.OutputFileAndClose(fileName)
+}
+
+func main() {
+	invoice := InvoiceData{
+		CompanyName:      "ООО АйСофтПро",
+		CompanyAddress:   "344002, РОССИЯ, Ростов-на-Дону, ул. Социалистическая, 74, офис 500",
+		RecipientName:    "Компания Ромашка",
+		SubscriptionName: "Подписка Premium",
+		Cost:             1000,
+		CostInWords:      "Одна тысяча рублей 00 копеек",
+		InvoiceNumber:    "001",
+		InvoiceDate:      "01 Января 2011 г.",
+		DirectorName:     "Иванов И.И.",
+		AccountantName:   "Петрова А.А.",
+	}
+
+	if err := GenerateInvoice(invoice, "invoice_fixed.pdf"); err != nil {
+		log.Fatal(err)
+	}
+}
