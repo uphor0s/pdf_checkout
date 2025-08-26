@@ -1,3 +1,4 @@
 pdfs/*
 main.go_
 gen_file.go_
+*.DS_Store
